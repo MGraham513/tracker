@@ -174,6 +174,14 @@ export async function renderStats(container) {
         <div class="card-label">Miles per week — last 8 weeks</div>
         <div class="chart-wrap"><canvas id="chart-miles"></canvas></div>
       </div>
+
+      <div class="divider"></div>
+
+      <div class="card">
+        <div class="card-label">Data</div>
+        <p class="form-note" style="margin-bottom:14px">Download all sleep and workout entries as a JSON file.</p>
+        <button class="btn btn-secondary btn-full" id="export-btn">Export All Data</button>
+      </div>
     </div>
   `;
 
@@ -257,5 +265,22 @@ export async function renderStats(container) {
       }],
     },
     options: { ...CHART_DEFAULTS, scales: { ...CHART_DEFAULTS.scales, y: { ...CHART_DEFAULTS.scales.y, beginAtZero: true } } },
+  });
+
+  document.getElementById('export-btn').addEventListener('click', async () => {
+    const [sleep, workouts] = await Promise.all([
+      db.getAll('sleep'),
+      db.getAll('workouts'),
+    ]);
+    const payload = { exported: new Date().toISOString(), sleep, workouts };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tracker-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   });
 }
